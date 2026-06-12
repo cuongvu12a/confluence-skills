@@ -1,6 +1,8 @@
 # Claude Code Skills
 
-Thư mục này chứa các Claude Code global skill dùng trong workflow phân tích và review của team Merchize.
+Thư mục này chứa các Claude Code skill dùng trong workflow phân tích và review của team Merchize.
+
+Skill được cài **local (project-level)** vào `<project>/.claude/skills/`. Vì workflow gắn chặt với workspace `maintain` (đọc `erp/`, `erp-webapp/`, ghi `ai-plans/`, `ai-review/`), cài local hợp lý hơn global. `install.sh` tự bake đúng đường dẫn `confluence_fetch.py` trên máy bạn nên không còn lỗi đường dẫn hardcoded khi đồng bộ giữa các máy.
 
 ## Skills có sẵn
 
@@ -12,12 +14,14 @@ Thư mục này chứa các Claude Code global skill dùng trong workflow phân 
 ## Cài đặt (máy mới)
 
 ```bash
-# 1. Clone hoặc pull repo về
-git clone <repo-url> ~/workspace/merchize/maintain
-cd ~/workspace/merchize/maintain
+# 1. Clone hoặc pull confluence-skills về (trong workspace maintain)
+cd ~/workspace/merchize/maintain/confluence-skills
 
-# 2. Cài đặt skills vào ~/.claude/skills/
-bash tools/skills/install.sh
+# 2. Cài skills LOCAL vào <target_folder>/.claude/skills/
+#    Bỏ trống target => mặc định cài vào workspace `maintain`
+bash skills/install.sh
+#    Hoặc chỉ định project đích:
+bash skills/install.sh ~/workspace/merchize/maintain
 
 # 3. Cài dependency Python (nếu chưa có)
 pip install requests html2text
@@ -29,12 +33,12 @@ source ~/.zshrc
 
 Lấy PAT token tại: **Confluence → Profile (góc trên phải) → Personal Access Tokens**
 
-> **Lưu ý**: Script install tự động thay thế đường dẫn hardcoded `confluence_fetch.py` bằng đường dẫn thực tế trên máy của bạn.
+> **Lưu ý**: `install.sh` tự thay placeholder đường dẫn `confluence_fetch.py` bằng absolute path thực tế trên máy bạn — chạy lại sau khi clone trên máy mới là đủ, không cần sửa tay.
 
 ## Xem trước khi cài (dry-run)
 
 ```bash
-bash tools/skills/install.sh --dry-run
+bash skills/install.sh --dry-run            # hoặc: --dry-run <target_folder>
 ```
 
 ## Cập nhật skill
@@ -43,7 +47,7 @@ Khi skill được cập nhật trong repo, chạy lại:
 
 ```bash
 git pull
-bash tools/skills/install.sh
+bash skills/install.sh                       # hoặc kèm <target_folder>
 ```
 
 ## Cách dùng
@@ -97,13 +101,15 @@ Output lưu tại: `ai-review/<ticket-id>/requirement_review.md`
 ## Cấu trúc thư mục
 
 ```
-tools/skills/
-├── README.md                          # File này
-├── install.sh                         # Script cài đặt vào ~/.claude/skills/
-├── confluence-research/
-│   └── SKILL.md                       # Skill definition
-└── branch-impact-review/
-    └── SKILL.md                       # Skill definition
+confluence-skills/
+├── confluence_fetch.py                # Python tool (được skill gọi tới)
+└── skills/
+    ├── README.md                      # File này
+    ├── install.sh                     # Script cài LOCAL vào <target>/.claude/skills/
+    ├── confluence-research/
+    │   └── SKILL.md                   # Skill definition
+    └── branch-impact-review/
+        └── SKILL.md                   # Skill definition
 ```
 
-Skills được cài vào `~/.claude/skills/` (global) nên hoạt động từ bất kỳ project nào.
+Skills được cài vào `<target_folder>/.claude/skills/` (local) nên chỉ có hiệu lực trong project đó — phù hợp vì workflow gắn với workspace `maintain`.
