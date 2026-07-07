@@ -72,7 +72,7 @@ log "Confluence tool : $CONFLUENCE_TOOL"
 $DRY_RUN && log "(dry-run: không ghi file)"
 echo ""
 
-SKILLS=("confluence-research" "branch-impact-review")
+SKILLS=("confluence-research" "branch-impact-review" "break-task-executor")
 
 for skill in "${SKILLS[@]}"; do
   SRC="$SCRIPT_DIR/$skill/SKILL.md"

@@ -10,6 +10,7 @@ Skill được cài **local (project-level)** vào `<project>/.claude/skills/`. 
 |-------|-------|---------|
 | `confluence-research` | Đọc trang Confluence + đối chiếu code → sinh break task và prompt table | `đọc confluence`, `confluence research`, `nghiên cứu yêu cầu` |
 | `branch-impact-review` | So sánh nhánh FE/BE vs master → đánh giá coverage, scope impact, performance | `đánh giá nhánh`, `review branch`, `branch review` |
+| `break-task-executor` | Thực thi tự động task trong bảng Break Task của plan → worktree mỗi phía (1 commit/task), review-tối-ưu lặp, sinh test-plan | `thực thi task`, `execute break task`, `chạy plan` |
 
 ## Cài đặt (máy mới)
 
@@ -98,6 +99,34 @@ Output lưu tại: `ai-review/<ticket-id>/requirement_review.md`
 
 **Yêu cầu**: `CONFLUENCE_PAT` env var (nếu dùng Confluence URL)
 
+---
+
+### break-task-executor
+
+Tiêu thụ plan do `confluence-research` sinh ra và thực thi các task.
+
+```
+thực thi task backend theo plan ai-plans/no-git/FAC-23965.md
+```
+
+Hoặc:
+```
+execute break task both  plan=ai-plans/<branch>/confluence_research.md
+```
+
+Chỉ định phạm vi: `backend` | `frontend` | `both`.
+
+Skill sẽ:
+1. Parse bảng Break Task + bảng Prompt trong plan, sắp thứ tự BE → contract → FE
+2. Tạo worktree mỗi phía (base = HEAD hiện tại), thực thi mỗi task qua subagent
+3. Review-tối-ưu lặp mỗi task (chất lượng/hiệu suất/chức năng), tối đa 3 vòng → **1 commit sạch/task**
+4. Impact review cấp nhánh mỗi phía; sinh contract BE↔FE
+5. Sinh test-plan cho phần impact + handoff summary (mapping task→commit + lệnh cherry-pick)
+
+Output: worktree tại `.worktrees/`, artifacts tại `ai-plans/<branch>/` (`be-fe-contract.md`, `test_plan.md`, `execution_report.md`).
+
+**Yêu cầu**: plan file có bảng Break Task; repo `erp`/`erp-webapp` working tree sạch.
+
 ## Cấu trúc thư mục
 
 ```
@@ -108,7 +137,9 @@ confluence-skills/
     ├── install.sh                     # Script cài LOCAL vào <target>/.claude/skills/
     ├── confluence-research/
     │   └── SKILL.md                   # Skill definition
-    └── branch-impact-review/
+    ├── branch-impact-review/
+    │   └── SKILL.md                   # Skill definition
+    └── break-task-executor/
         └── SKILL.md                   # Skill definition
 ```
 
