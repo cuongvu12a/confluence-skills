@@ -11,6 +11,7 @@ Skill được cài **local (project-level)** vào `<project>/.claude/skills/`. 
 | `confluence-research` | Đọc trang Confluence + đối chiếu code → sinh break task và prompt table | `đọc confluence`, `confluence research`, `nghiên cứu yêu cầu` |
 | `branch-impact-review` | So sánh nhánh FE/BE vs master → đánh giá coverage, scope impact, performance | `đánh giá nhánh`, `review branch`, `branch review` |
 | `break-task-executor` | Thực thi tự động task trong bảng Break Task của plan → worktree mỗi phía (1 commit/task), review-tối-ưu lặp, sinh test-plan | `thực thi task`, `execute break task`, `chạy plan` |
+| `jira-task-creator` | Tạo task Jira (team FAC) hàng loạt từ bảng Break Task, dry-run trước, hỏi Epic Link + Management Systems mỗi lần | `tạo task jira`, `tạo jira từ plan`, `push break task lên jira` |
 
 ## Cài đặt (máy mới)
 
@@ -30,9 +31,16 @@ pip install requests html2text
 # 4. Thiết lập Confluence PAT trong shell profile (~/.zshrc hoặc ~/.bashrc)
 echo 'export CONFLUENCE_PAT="your-personal-access-token-here"' >> ~/.zshrc
 source ~/.zshrc
+
+# 5. (Nếu dùng jira-task-creator) Thiết lập Jira PAT
+echo 'export JIRA_URL="https://jira.mymerchize.com"' >> ~/.zshrc
+echo 'export JIRA_TOKEN="your-jira-personal-access-token-here"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 Lấy PAT token tại: **Confluence → Profile (góc trên phải) → Personal Access Tokens**
+
+Lấy Jira PAT token tại: **Jira → avatar → Profile → Personal Access Tokens** (xem chi tiết field/flow trong `jira-create-guide.md`)
 
 > **Lưu ý**: `install.sh` tự thay placeholder đường dẫn `confluence_fetch.py` bằng absolute path thực tế trên máy bạn — chạy lại sau khi clone trên máy mới là đủ, không cần sửa tay.
 
@@ -127,11 +135,34 @@ Output: worktree tại `.worktrees/`, artifacts tại `ai-plans/<branch>/` (`be-
 
 **Yêu cầu**: plan file có bảng Break Task; repo `erp`/`erp-webapp` working tree sạch.
 
+---
+
+### jira-task-creator
+
+Chuyển bảng Break Task của plan thành task thật trên Jira (team **FAC**).
+
+```
+tạo task jira từ ai-plans/no-git/confluence_research.md, epic FAC-26380, management systems LAB
+```
+
+Skill sẽ:
+1. Đọc bảng Break Task, hỏi Epic Link + Management Systems nếu chưa có trong message
+2. Build `tasks.json`, làm tròn lên Estimate → dùng luôn làm Story Points
+3. Chạy **dry-run trước** (`create_jira_tasks.py`), đưa output cho user xem (project/assignee/sprint active/epic/management systems + từng task)
+4. Chỉ `--apply` (tạo thật) sau khi user xác nhận
+5. Báo lại danh sách Txx → key Jira vừa tạo
+
+Không tạo issueLink Blocks cho dòng "Cần Txx" (chỉ giữ nguyên trong description). Assignee mặc định là chủ token. Sprint luôn lấy active sprint của board FAC tại thời điểm chạy — không hỏi lại.
+
+**Yêu cầu**: `JIRA_URL`, `JIRA_TOKEN` env var; plan file có bảng Break Task.
+
 ## Cấu trúc thư mục
 
 ```
 confluence-skills/
-├── confluence_fetch.py                # Python tool (được skill gọi tới)
+├── confluence_fetch.py                # Python tool (được skill confluence-research gọi tới)
+├── create_jira_tasks.py               # Python tool (được skill jira-task-creator gọi tới)
+├── jira-create-guide.md               # Chi tiết field Jira / cách tra field id, sprint
 └── skills/
     ├── README.md                      # File này
     ├── install.sh                     # Script cài LOCAL vào <target>/.claude/skills/
@@ -139,7 +170,9 @@ confluence-skills/
     │   └── SKILL.md                   # Skill definition
     ├── branch-impact-review/
     │   └── SKILL.md                   # Skill definition
-    └── break-task-executor/
+    ├── break-task-executor/
+    │   └── SKILL.md                   # Skill definition
+    └── jira-task-creator/
         └── SKILL.md                   # Skill definition
 ```
 

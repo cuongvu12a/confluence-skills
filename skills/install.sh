@@ -38,9 +38,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # confluence-skills
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"                     # confluence-skills
 WORKSPACE_DIR="$(cd "$REPO_DIR/.." && pwd)"                  # maintain (mặc định)
 CONFLUENCE_TOOL="$REPO_DIR/confluence_fetch.py"
+JIRA_SCRIPT="$REPO_DIR/create_jira_tasks.py"
 
 # Chuỗi placeholder hardcoded trong các SKILL.md cần được thay thế
 OLD_PATH="/Users/cuongvu/workspace/merchize/maintain/tools/confluence_fetch.py"
+OLD_PATH_JIRA_SCRIPT="/Users/cuongvu/workspace/merchize/maintain/confluence-skills/create_jira_tasks.py"
 
 # Xác định thư mục đích
 TARGET_DIR="${TARGET_ARG:-$WORKSPACE_DIR}"
@@ -69,10 +71,11 @@ log "Skills src      : $SCRIPT_DIR"
 log "Target project  : $TARGET_DIR"
 log "Skills dest     : $SKILLS_DEST"
 log "Confluence tool : $CONFLUENCE_TOOL"
+log "Jira script     : $JIRA_SCRIPT"
 $DRY_RUN && log "(dry-run: không ghi file)"
 echo ""
 
-SKILLS=("confluence-research" "branch-impact-review" "break-task-executor")
+SKILLS=("confluence-research" "branch-impact-review" "break-task-executor" "jira-task-creator")
 
 for skill in "${SKILLS[@]}"; do
   SRC="$SCRIPT_DIR/$skill/SKILL.md"
@@ -87,7 +90,7 @@ for skill in "${SKILLS[@]}"; do
   run mkdir -p "$DEST_DIR"
 
   # Thay placeholder path bằng đường dẫn thực tế trên máy này
-  REPLACED=$(sed "s|$OLD_PATH|$CONFLUENCE_TOOL|g" "$SRC")
+  REPLACED=$(sed -e "s|$OLD_PATH|$CONFLUENCE_TOOL|g" -e "s|$OLD_PATH_JIRA_SCRIPT|$JIRA_SCRIPT|g" "$SRC")
 
   if $DRY_RUN; then
     echo "[dry-run] Would write $DEST"

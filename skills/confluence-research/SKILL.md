@@ -574,3 +574,7 @@ Trước khi finalize, kiểm tra:
 ❌ Gộp backend và frontend vào cùng bảng task  
 ❌ Đưa ra estimate khi chưa đọc code tương ứng  
 ❌ Bỏ qua memory-bank khi đã có file `.memory-bank/`  
+
+## Sau khi có Bảng Break Task
+
+Sau khi file plan đã lưu xong và có Bảng Break Task, hỏi user có muốn tạo task Jira từ bảng này không. Nếu có, chuyển sang skill `jira-task-creator` (không tự ý gọi API Jira trong skill này) — skill đó sẽ hỏi Epic Link + Management Systems và luôn dry-run trước khi tạo thật.
